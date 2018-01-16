@@ -356,11 +356,23 @@ static struct dps_800ab_16_d_data *dps_800ab_16_d_update_device( \
 		/* one milliseconds from now */
 		data->last_updated = jiffies + HZ / 1000;
 		
+		data->v_in  = 0;
+		data->v_out = 0;
+		data->i_in  = 0;
+		data->i_out = 0;
+		data->p_in  = 0;
+		data->p_out = 0;
+		data->temp_input[0] = 0;
+		data->temp_input[1] = 0;
+		data->fan_duty_cycle[0] = 0;
+		data->fan_speed[0]  = 0;
+		data->mfr_model[0]  = '\0';
+		data->mfr_serial[0] = '\0';
+
 		command = 0x9a;		/* PSU mfr_model */
 		status = dps_800ab_16_d_read_block(client, command, 
 		data->mfr_model, ARRAY_SIZE(data->mfr_model) - 1);
     	data->mfr_model[ARRAY_SIZE(data->mfr_model) - 1] = '\0';
-
     	if (status < 0) {
             	dev_dbg(&client->dev, "reg %d, err %d\n", command, 
 							status);
@@ -370,46 +382,33 @@ static struct dps_800ab_16_d_data *dps_800ab_16_d_update_device( \
     	status = dps_800ab_16_d_read_block(client, command, 
 		data->mfr_serial, ARRAY_SIZE(data->mfr_serial) - 1);
     	data->mfr_serial[ARRAY_SIZE(data->mfr_serial) - 1] = '\0';
-    	
     	if (status < 0) {
             	dev_dbg(&client->dev, "reg %d, err %d\n", command, 
 							status);
-			data->v_in  = 0;
-			data->v_out = 0;
-			data->i_in  = 0;
-			data->i_out = 0;
-			data->p_in  = 0;
-			data->p_out = 0;
-			data->temp_input[0] = 0;
-			data->temp_input[1] = 0;
-			data->fan_duty_cycle[0] = 0;
-			data->fan_speed[0]  = 0;
-			data->mfr_model[0]  = '\0';
-			data->mfr_serial[0] = '\0';
 		}
-		else{
-			for (i = 0; i < ARRAY_SIZE(regs_byte); i++) {
-				status = dps_800ab_16_d_read_byte(client, 
-								regs_byte[i].reg);
-				if (status < 0) {
-					dev_dbg(&client->dev, "reg %d, err %d\n",
-						regs_byte[i].reg, status);
-				} else {
-					*(regs_byte[i].value) = status;
-				}
-			}
 
-			for (i = 0; i < ARRAY_SIZE(regs_word); i++) {
-				status = dps_800ab_16_d_read_word(client,
-								regs_word[i].reg);
-				if (status < 0) {
-					dev_dbg(&client->dev, "reg %d, err %d\n",
-						regs_word[i].reg, status);
-				} else {
-					*(regs_word[i].value) = status;
-				}
-			}   			
-   		}
+		for (i = 0; i < ARRAY_SIZE(regs_byte); i++) {
+			status = dps_800ab_16_d_read_byte(client, 
+							regs_byte[i].reg);
+			if (status < 0) {
+				dev_dbg(&client->dev, "reg %d, err %d\n",
+					regs_byte[i].reg, status);
+			} else {
+				*(regs_byte[i].value) = status;
+			}
+		}
+
+		for (i = 0; i < ARRAY_SIZE(regs_word); i++) {
+			status = dps_800ab_16_d_read_word(client,
+							regs_word[i].reg);
+			if (status < 0) {
+				dev_dbg(&client->dev, "reg %d, err %d\n",
+					regs_word[i].reg, status);
+			} else {
+				*(regs_word[i].value) = status;
+			}
+		}   			
+   		
 
 		data->valid = 1;
 	}
